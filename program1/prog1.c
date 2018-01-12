@@ -21,7 +21,7 @@
 
 int main(int argc, char *argv[]) {
 
-    char passord[SIZE] = "";
+    char password[SIZE] = "";
 
     struct termios termStruct;
 
@@ -31,12 +31,12 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    printf("Disabling echo.\n");
+    printf("\nDisabling echo.\n");
     
     //Determine whether echo is on or off.
-    if( (term.c_lflag & ECHO) ) {
+    if( (termStruct.c_lflag & ECHO) ) {
         //turn off the echo bit
-        termStruct.c_lflag = termStruct & ~ECHO;
+        termStruct.c_lflag = termStruct.c_lflag & ~ECHO;
         if(tcsetattr(STDIN_FILENO, TCSANOW, &termStruct) != 0) {
         printf("An error occured. Unable to change the terminal's attribute(s)");
         return 0;
@@ -44,19 +44,20 @@ int main(int argc, char *argv[]) {
     } 
     
     printf("Enter secret word/phrase: ");
-    scanf(&password);
+    scanf("%s", password);
 
-    printf("You entered: %s\n", &password);
+    printf("\nYou entered: %s\n", password);
 
-    termStruct.c_lflag = termStruct | ECHO;
+    termStruct.c_lflag = termStruct.c_lflag | ECHO;
     if(tcsetattr(STDIN_FILENO, TCSANOW, &termStruct) != 0) {
         printf("An error occured. Unable to change the terminal's attribute(s)");
         return 0;
         }
     
-    printf("Default behavior restored.\n");
+    printf("\nDefault behavior restored.\n");
     printf("Enter visible word/phrase: ");
-    scanf(&password);  
+    scanf("%s", password);
+    printf("\n");  
     
     return 0;
 }
