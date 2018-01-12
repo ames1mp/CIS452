@@ -57,7 +57,33 @@ int main(int argc, char *argv[]) {
     printf("\nDefault behavior restored.\n");
     printf("Enter visible word/phrase: ");
     scanf("%s", password);
-    printf("\n");  
+    printf("\n\n");
+
+    printf("OHH YEAH! EXTRA CREDIT\n");
+    
+    termStruct.c_iflag |= IUCLC;
+    if(tcsetattr(STDIN_FILENO, TCSANOW, &termStruct) != 0) {
+        printf("An error occured. Unable to change the terminal's attribute(s)");
+        return 0;
+    }
+
+    printf("Enter a word/phrase in capital letters, go ahead try: ");
+    scanf("%s", password);
+    printf("You entered: %s", password);
+
+    termStruct.c_iflag &= ~IUCLC;
+    	if(tcsetattr(STDIN_FILENO, TCSANOW, &termStruct) != 0) {
+       printf("An error occured. Unable to change the terminal's attribute(s)");
+       return 0;
+    }
+
+    printf("\n\nDefault behavior restored.\n");
+    printf("OK, try now: ");
+    scanf("%s", password);
+    printf("\nYou entered: %s", password);
+    printf("\n\n");
+
+
     
     return 0;
 }
