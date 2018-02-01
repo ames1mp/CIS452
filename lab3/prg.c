@@ -1,3 +1,18 @@
+/************************************
+* Michael Ames & Adam Slifco
+* Lab 3 Programming Assignment
+* CIS 452: Operating System Concepts
+* Winter 2018 - GVSU
+* Instructor: Greg Wolffe
+*
+* This program illustrates the use of
+* asynchronus IPC through the use of
+* signals to communicate between a
+* parent and child process.
+************************************/
+
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -9,15 +24,18 @@ void signalHandler(int);
 
 int main()
 {
+    //Get and store parent PID
     pid_t parentPid;
     parentPid = getpid();
 
     pid_t childPid = 0;
 
+    //Fork child process, and check for errors.
     if( (childPid = fork()) < 0) {
        perror("Fork failed.");
         exit(1);
     }
+    //child process
     else if (!childPid) {
         srand(time(NULL));
         int randTime;
@@ -31,21 +49,21 @@ int main()
 
             randProcess = rand() % 2 + 1;
 
-            printf("%d", randTime);
 
             if(randProcess == 1)
                 kill(parentPid, SIGUSR1);
             else
                 kill(parentPid, SIGUSR2);
         }
-
+    //parent process
     } else {
 
         while(1) {
 
         printf("waiting . . .");
         fflush(stdout);
-
+        
+        //reinstall signal handlers
         signal(SIGINT, signalHandler);
         signal(SIGUSR1, signalHandler);
         signal(SIGUSR2, signalHandler);
@@ -92,7 +110,4 @@ void signalHandler(int signalNumber) {
          printf("RECEIVED SIGUSR2 SIGNAL\n");
 
         }
-
 }
-
-
