@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
     
     printf("\nDefault behavior restored.\n");
     printf("Enter visible word/phrase: ");
-    scanf("%s", password);
+    
     printf("\n\n");
 
     printf("OHH YEAH! EXTRA CREDIT\n");
