@@ -18,6 +18,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <signal.h>
 
 #define SIZE 4096
 #define READ 0
@@ -36,23 +37,28 @@ void handleError(int errorCode);
 void sigHandler(int sigNum);
 void createChild(char* fileName, pid_t* childrenIds, char* childFileName, int index);
 
+int parentWriteFds[MAX_CHILDREN][2];
+int parentReadFds[MAX_CHILDREN][2];
+pid_t childrenIds[MAX_CHILDREN] = {0};
+int numFiles = 0;
+
 
 int main() {
 
     char fileNames[SIZE] = "\0";
     char* tok;
     char fileTokens[MAX_CHILDREN][SIZE];
-    int numFiles = 0;
+    
 
-    pid_t parentId;
-    pid_t pid;
-    pid_t childrenIds[MAX_CHILDREN] = {0};
+    //pid_t parentId;
+      pid_t pid;
+      
 
     char query[SIZE];
     
-    parentId = getpid();
+    //parentId = getpid();
 
-    //signal(SIGINT, sigHandler);
+    signal(SIGINT, sigHandler);
 
     printf("Please enter up to 10 files names, separated by whitespace\n");
 
@@ -62,15 +68,14 @@ int main() {
 
     //Tokenize the string. Credit: https://www.tutorialspoint.com/c_standard_library/c_function_strtok.htm
     while(tok != NULL) {
-        char temp[SIZE]; 
+        //char temp[SIZE]; 
         strcpy(fileTokens[numFiles], tok);
         ++numFiles;
         tok = strtok(NULL, " ");      
     }
     
 
-    int parentWriteFds[numFiles][2];
-    int parentReadFds[numFiles][2];
+    
 
     //create pipes
     for (int i = 0; i < numFiles; ++i) {
@@ -80,6 +85,7 @@ int main() {
             handleError(PIPE_ERROR);
     }
   
+    
     //fork and exec children
      for(int i = 0; i < numFiles; ++i) {
         
@@ -88,6 +94,7 @@ int main() {
         fflush(stdout);
         
         pid = fork();
+        childrenIds[i] = pid;
     
         if(pid < 0) {
             perror("Failed to fork.");
@@ -174,10 +181,25 @@ int main() {
 void sigHandler(int sigNum) {
 
     if(sigNum == SIGINT) {
-        printf("Received an interrupt.");
-        
-        //TODO: close all pipes, files, sockets, terminate all child processes
+        printf("Received an interrupt.\n");
 
+        printf("Parent: Closing pipes.\n");
+        for(int i = 0; i < numFiles; ++i) {
+            close(parentReadFds[i][READ]);
+            close(parentReadFds[i][WRITE]);
+
+            close(parentWriteFds[i][READ]);
+            close(parentWriteFds[i][WRITE]);
+
+            printf("Parent: Sending signal to child: %d.\n", childrenIds[i]);
+            kill(childrenIds[i], SIGUSR1);
+        }
+
+         for(int i = 0; i < numFiles; ++i) {
+            wait(NULL);
+         };
+
+        printf("Parent: exiting.\n");
         exit(0);
     }
 }

@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <ctype.h>
+#include <signal.h>
 
 #define SIZE 4096
 #define READ 0
@@ -24,24 +25,27 @@ void sigHandler(int sigNum);
 void handleError(int errorCode);
 char *trimwhitespace(char *str);
 
+int readPipe;
+int writePipe;
+
 int main(int argc, char* argv[]) {
+
+    signal(SIGUSR1, sigHandler);
 
     char query[SIZE];
     char * trimmedFileName;
     char * trimmedQuery;
     int total;
     char stringTotal[SIZE];
-    int len = 0;
-    int readPipe;
-    int writePipe;
+    
+    
     int childNo;
     
 
     readPipe = (int) strtol(argv[2], (char **)NULL, 10);
     writePipe = (int) strtol(argv[3], (char **)NULL, 10);
     childNo = (int) strtol(argv[4], (char **)NULL, 10);
-    pid_t pid;
-    pid = getpid();
+    
     
     while(1) {
 
@@ -98,6 +102,8 @@ int main(int argc, char* argv[]) {
 ***********************************************************************/
 int readFile(char* fileName, char* query) {
 
+    
+    
     int fileSize;
     char line[SIZE];
     int count = 0;
@@ -154,10 +160,18 @@ int getFileSize(char* fileName) {
 
 void sigHandler(int sigNum) {
 
-    //free malloc
-    //close file
-    //exit
+    if(sigNum == SIGUSR1)  {
+    printf("Child: closing pipes");
+    close(readPipe);
+    close(writePipe);
+    printf("Child: exiting");
+    exit(0);
+
+    
     return;
+    }
+    
+    
 }
 
 //credit: https://stackoverflow.com/questions/122616/how-do-i-trim-leading-trailing-whitespace-in-a-standard-way
