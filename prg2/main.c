@@ -140,7 +140,8 @@ int main() {
         //write query to children
         for(int i = 0; i < numFiles; ++i) {
             fflush(stdout);
-            printf("Parent: Sending query to child %d \n", i);
+            sleep(.3);
+            printf("\nParent: Sending query to child %d \n", i);
             fflush(stdout);
             write(parentWriteFds[i][WRITE], query, SIZE);
         }
@@ -150,7 +151,10 @@ int main() {
         for(int i = 0; i < numFiles; ++i) { 
             read(parentReadFds[i][READ], buffer, SIZE);
             results[i] = (int) strtol(buffer, (char **)NULL, 10);
-            //close(parentReadFds[i][READ]);      
+            fflush(stdout);
+            sleep(.3);
+            printf("\nParent: Read total %i from child %d\n", results[i], i);
+            fflush(stdout);      
         }
 
         int total = 0;
@@ -158,7 +162,7 @@ int main() {
             //printf("%d\n", results[i]);
             total += results[i];
         }
-        printf("\nThe total occurances of the word \"%s\" in %d files is: %d\n", query, numFiles, total);
+        printf("\nThe total occurrences of the word \"%s\" in %d files is: %d\n", query, numFiles, total);
         }
 
     return 0;

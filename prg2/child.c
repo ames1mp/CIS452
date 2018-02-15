@@ -53,7 +53,8 @@ int main(int argc, char* argv[]) {
        trimmedQuery = trimwhitespace(query);
        
        fflush(stdout); 
-       printf("Child %d: Scanning file - %s\n", childNo, argv[1]);
+       sleep(.3);
+       printf("\nChild %d: Scanning file - %s\n", childNo, argv[1]);
        fflush(stdout);
        
        total = readFile(trimmedFileName, trimmedQuery);
@@ -61,7 +62,8 @@ int main(int argc, char* argv[]) {
        sprintf(stringTotal, "%d", total);
        
        fflush(stdout);
-       printf("Child %d: Writing total of %d to pipe.\n", childNo, total);
+       sleep(.3);
+       printf("\nChild %d: Writing total of %d to pipe.\n", childNo, total);
        fflush(stdout);
        
        write(writePipe, stringTotal, SIZE);
