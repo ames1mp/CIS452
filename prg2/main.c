@@ -125,30 +125,37 @@ int main() {
     }
     
     sleep(1);
-    printf("Enter your search word: ");
-    fgets(query, SIZE, stdin);
-
-    char buffer[SIZE];
     
-    //write query to children
-    for(int i = 0; i < numFiles; ++i) {
-        fflush(stdout);
-        printf("Parent: Sending query to child %d\n", i);
-        fflush(stdout);
-        write(parentWriteFds[i][WRITE], query, SIZE);
-    }
-    
-    sleep(1);
-    int results[numFiles];
-    for(int i = 0; i < numFiles; ++i) { 
-        read(parentReadFds[i][READ], buffer, SIZE);
-        results[i] = (int) strtol(buffer, (char **)NULL, 10);
-        //close(parentReadFds[i][READ]);      
-    }
+    while(1) {
+        printf("Enter your search word: ");
+        fgets(query, SIZE, stdin);
 
-    for(int i = 0; i < numFiles; ++i) { 
-        printf("%d\n", results[i]);
-    }
+        char buffer[SIZE];
+        
+        //write query to children
+        for(int i = 0; i < numFiles; ++i) {
+            fflush(stdout);
+            printf("Parent: Sending query to child %d\n", i);
+            fflush(stdout);
+            write(parentWriteFds[i][WRITE], query, SIZE);
+        }
+        
+        sleep(1);
+        int results[numFiles];
+        for(int i = 0; i < numFiles; ++i) { 
+            read(parentReadFds[i][READ], buffer, SIZE);
+            results[i] = (int) strtol(buffer, (char **)NULL, 10);
+            //close(parentReadFds[i][READ]);      
+        }
+
+        int total = 0;
+        for(int i = 0; i < numFiles; ++i) { 
+            //printf("%d\n", results[i]);
+            total += results[i];
+        }
+        printf("The total occurances of the word \"%s\" in %d files is: %d\n", query, numFiles, total);
+        }
+    
   
     
     //read(parentReadFds[0][READ], buffer, SIZE);
@@ -168,6 +175,7 @@ void sigHandler(int sigNum) {
 
     if(sigNum == SIGINT) {
         printf("Received an interrupt.");
+        
         //TODO: close all pipes, files, sockets, terminate all child processes
 
         exit(0);

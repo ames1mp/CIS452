@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
        read(readPipe, query, SIZE);
        
        trimmedFileName = trimwhitespace(argv[1]);
-       printf("Trimmed %s\n", trimmedFileName);
+       
 
        trimmedQuery = trimwhitespace(query);
        
