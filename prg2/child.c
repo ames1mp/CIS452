@@ -36,12 +36,9 @@ int main(int argc, char* argv[]) {
     char * trimmedFileName;
     char * trimmedQuery;
     int total;
-    char stringTotal[SIZE];
-    
-    
+    char stringTotal[SIZE];     
     int childNo;
     
-
     readPipe = (int) strtol(argv[2], (char **)NULL, 10);
     writePipe = (int) strtol(argv[3], (char **)NULL, 10);
     childNo = (int) strtol(argv[4], (char **)NULL, 10);
@@ -53,7 +50,6 @@ int main(int argc, char* argv[]) {
        
        trimmedFileName = trimwhitespace(argv[1]);
        
-
        trimmedQuery = trimwhitespace(query);
        
        fflush(stdout); 
@@ -63,33 +59,14 @@ int main(int argc, char* argv[]) {
        total = readFile(trimmedFileName, trimmedQuery);
        
        sprintf(stringTotal, "%d", total);
-
-
-       //fflush(stdout);
-       //printf("Child %d: Scanning file - %s\n", childNo, argv[2]); //TEST
-       //fflush(stdout);
        
        fflush(stdout);
-       printf("Child %d: Writing total to pipe.\n", childNo);
+       printf("Child %d: Writing total of %d to pipe.\n", childNo, total);
        fflush(stdout);
        
        write(writePipe, stringTotal, SIZE);
-       //write("%s", childNo, SIZE);
-       //write(writePipe, "JHHG", SIZE);//TEST
     }
         
-    //printf("I am the child, and my file is: %s\n", argv[1]);
-    //printf("I am the child, and my read pipe is: %s\n", argv[2]);
-    //printf("I am the child, and my write pipe is: %s\n", argv[3]);
-    //printf("I am the child, and my number is: %s\n", argv[4]);
-
-    //int readPipeFd;
-    //readPipeFd = (int) strtol(argv[2], (char **)NULL, 10);
-
-    //printf("Im the child and the read pipe is %d", readPipeFd);
-    
-
-
     return 0;
 }
 
@@ -154,24 +131,21 @@ int getFileSize(char* fileName) {
         handleError(FILE_NOT_FOUND);
     int size = st.st_size;
     return size;
-
 }
-
 
 void sigHandler(int sigNum) {
 
     if(sigNum == SIGUSR1)  {
-    printf("Child: closing pipes");
+    
+    printf("Child: closing pipes.\n");
+    fflush(stdout);
+
     close(readPipe);
     close(writePipe);
-    printf("Child: exiting");
+    printf("Child: exiting.\n");
+    fflush(stdout);
     exit(0);
-
-    
-    return;
-    }
-    
-    
+    }  
 }
 
 //credit: https://stackoverflow.com/questions/122616/how-do-i-trim-leading-trailing-whitespace-in-a-standard-way
@@ -219,9 +193,7 @@ void handleError(int errorCode) {
         case 4 :
             fprintf( stderr, "Failed to fork.\n" );
             break;
-
     }
-
     exit(1);
 }
 

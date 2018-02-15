@@ -60,22 +60,20 @@ int main() {
 
     signal(SIGINT, sigHandler);
 
-    printf("Please enter up to 10 files names, separated by whitespace\n");
+    printf("Please enter up to 10 files names, separated by commas\n");
 
     fgets(fileNames, SIZE, stdin);
 
-    tok = strtok(fileNames, " ");
+    tok = strtok(fileNames, ",");
 
     //Tokenize the string. Credit: https://www.tutorialspoint.com/c_standard_library/c_function_strtok.htm
     while(tok != NULL) {
         //char temp[SIZE]; 
         strcpy(fileTokens[numFiles], tok);
         ++numFiles;
-        tok = strtok(NULL, " ");      
+        tok = strtok(NULL, ",");      
     }
-    
-
-    
+     
 
     //create pipes
     for (int i = 0; i < numFiles; ++i) {
@@ -134,7 +132,7 @@ int main() {
     sleep(1);
     
     while(1) {
-        printf("Enter your search word: ");
+        printf("\nEnter your search word: ");
         fgets(query, SIZE, stdin);
 
         char buffer[SIZE];
@@ -142,7 +140,7 @@ int main() {
         //write query to children
         for(int i = 0; i < numFiles; ++i) {
             fflush(stdout);
-            printf("Parent: Sending query to child %d\n", i);
+            printf("Parent: Sending query to child %d \n", i);
             fflush(stdout);
             write(parentWriteFds[i][WRITE], query, SIZE);
         }
@@ -160,28 +158,17 @@ int main() {
             //printf("%d\n", results[i]);
             total += results[i];
         }
-        printf("The total occurances of the word \"%s\" in %d files is: %d\n", query, numFiles, total);
+        printf("\nThe total occurances of the word \"%s\" in %d files is: %d\n", query, numFiles, total);
         }
-    
-  
-    
-    //read(parentReadFds[0][READ], buffer, SIZE);
-   // printf("%s", buffer);
-   // close(parentReadFds[0][READ]);
-   // close(parentWriteFds[0][WRITE]);
-
 
     return 0;
 }
 
 
-
-
-
 void sigHandler(int sigNum) {
 
     if(sigNum == SIGINT) {
-        printf("Received an interrupt.\n");
+        printf("\n\nReceived an interrupt.\n");
 
         printf("Parent: Closing pipes.\n");
         for(int i = 0; i < numFiles; ++i) {
@@ -195,11 +182,12 @@ void sigHandler(int sigNum) {
             kill(childrenIds[i], SIGUSR1);
         }
 
+         printf("Waiting for children to exit.\n");
          for(int i = 0; i < numFiles; ++i) {
             wait(NULL);
          };
 
-        printf("Parent: exiting.\n");
+        printf("Parent: All children dead, exiting.\n");
         exit(0);
     }
 }
