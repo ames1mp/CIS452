@@ -93,25 +93,25 @@ int main() {
         }
         else if(pid == 0) {
             dup2(parentWriteFds[i][READ], STDIN_FILENO);
-            dup2(parentReadFds[i][WRITE], STDOUT_FILENO);
+            //dup2(parentReadFds[i][WRITE], STDOUT_FILENO);
             //child closes the write end of the parent's write pipe.
             close(parentWriteFds[i][WRITE]);
             close(parentWriteFds[i][READ]);
             //child closes the read end of the parent's read pipe.
             close(parentReadFds[i][READ]);
-            close(parentReadFds[i][WRITE]);
+            //close(parentReadFds[i][WRITE]);
 
             //child read pipe = parent write pipe
             //char childReadPipe[SIZE];
            // sprintf(childReadPipe, "%d", parentWriteFds[i][READ]);
             
-            //char childWritePipe[SIZE];
-            //sprintf(childWritePipe, "%d", parentReadFds[i][WRITE]);
+            char childWritePipe[SIZE];
+            sprintf(childWritePipe, "%d", parentReadFds[i][WRITE]);
             
            // char childNo[SIZE];
             //sprintf(childNo, "%d", i);
             
-            char* args[] = {CHILD_EXECUTABLE_PATH, fileTokens[i], NULL};
+            char* args[] = {CHILD_EXECUTABLE_PATH, fileTokens[i], childWritePipe, NULL};
             execv(args[0], args);
         }    
     }
@@ -141,66 +141,7 @@ int main() {
 
 
 
-/***********************************************************************
- 	Dynamically allocates memory equal to the size of the input file.
- 	Opens the input file and reads the text into the allocated memory.
-    @param filename the file from which to read.
-    @param query the word to search for.
-    @return count the number of times the word occurs in the file.
-***********************************************************************/
-int readFile(char* fileName, char* query) {
 
-    int fileSize;
-    char line[SIZE];
-    int count = 0;
-    char* pointer;
-
-    fileSize = getFileSize(fileName);
-
-    char* buffer = (char*) malloc(sizeof(char) * fileSize);
-
-    //Based on code used in my final project for CIS 361.
-    //Original code provided by Dr. Vijay Bhuse.
-    if(buffer == NULL)
-        handleError(MEM_ALLOCATION);
-
-    FILE* f = fopen(fileName, "r");
-
-    if (f == NULL)
-        handleError(FILE_NOT_FOUND);
-
-    //Adapted from https://stackoverflow.com/questions/20253177/how-to-count-how-many-times-a-word-appears-in-a-txt-file?lq=1
-    while( fgets(line, SIZE, f)) {
-        pointer = line;
-        while( (pointer = (strstr(pointer, query)))) {
-            count++;
-            ++pointer;
-        }
-    }
-
-    if ( (fclose(f)) !=0 )
-        handleError(FILE_CLOSE_IN);
-
-    free(buffer);
-
-    return count;
-}
-
-/***********************************************************************
- 	Creates a stat struct, populates it with data about the input file
- 	and returns the file's size.
-    @param filename the input file
-    @return size the file's size in bytes.
-***********************************************************************/
-int getFileSize(char* fileName) {
-
-    struct stat st;
-
-    if( stat( fileName, &st) == -1 )
-        handleError(FILE_NOT_FOUND);
-    int size = st.st_size;
-
-}
 
 void sigHandler(int sigNum) {
 
