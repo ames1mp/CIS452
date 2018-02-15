@@ -141,12 +141,13 @@ int main() {
     sleep(1);
     int results[numFiles];
     for(int i = 0; i < numFiles; ++i) { 
-        read(parentReadFds[0][READ], buffer, SIZE);
+        read(parentReadFds[i][READ], buffer, SIZE);
         results[i] = (int) strtol(buffer, (char **)NULL, 10);
-        fflush(stdout);
-        printf("From Child: %d\n", results[i]);
-        fflush(stdout);
-        close(parentReadFds[0][READ]);      
+        //close(parentReadFds[i][READ]);      
+    }
+
+    for(int i = 0; i < numFiles; ++i) { 
+        printf("%d\n", results[i]);
     }
   
     

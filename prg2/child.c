@@ -5,6 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <ctype.h>
 
 #define SIZE 4096
 #define READ 0
@@ -21,15 +22,20 @@ int readFile(char* fileName, char* query);
 int getFileSize(char* fileName);
 void sigHandler(int sigNum);
 void handleError(int errorCode);
+char *trimwhitespace(char *str);
 
 int main(int argc, char* argv[]) {
 
     char query[SIZE];
+    char * trimmedFileName;
+    char * trimmedQuery;
     int total;
     char stringTotal[SIZE];
+    int len = 0;
     int readPipe;
     int writePipe;
     int childNo;
+    
 
     readPipe = (int) strtol(argv[2], (char **)NULL, 10);
     writePipe = (int) strtol(argv[3], (char **)NULL, 10);
@@ -41,15 +47,16 @@ int main(int argc, char* argv[]) {
 
        read(readPipe, query, SIZE);
        
-       fflush(stdout); 
-       printf("Child %d: Scanning file - %s\n", childNo, argv[2]);
-       fflush(stdout);
+       trimmedFileName = trimwhitespace(argv[1]);
+       printf("Trimmed %s\n", trimmedFileName);
 
-       printf("The quer is %s", query);
+       trimmedQuery = trimwhitespace(query);
        
-       //total = readFile(argv[1], query);
-
-       total = 12;
+       fflush(stdout); 
+       printf("Child %d: Scanning file - %s\n", childNo, argv[1]);
+       fflush(stdout);
+       
+       total = readFile(trimmedFileName, trimmedQuery);
        
        sprintf(stringTotal, "%d", total);
 
@@ -151,6 +158,27 @@ void sigHandler(int sigNum) {
     //close file
     //exit
     return;
+}
+
+//credit: https://stackoverflow.com/questions/122616/how-do-i-trim-leading-trailing-whitespace-in-a-standard-way
+char *trimwhitespace(char *str)
+{
+  char *end;
+
+  // Trim leading space
+  while(isspace((unsigned char)*str)) str++;
+
+  if(*str == 0)  // All spaces?
+    return str;
+
+  // Trim trailing space
+  end = str + strlen(str) - 1;
+  while(end > str && isspace((unsigned char)*end)) end--;
+
+  // Write new null terminator
+  *(end+1) = 0;
+
+  return str;
 }
 
 /***********************************************************************
