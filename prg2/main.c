@@ -20,12 +20,14 @@
 #include <sys/wait.h>
 
 #define SIZE 4096
+#define READ 0
+#define WRITE 1
 #define MAX_CHILDREN 10
 #define FILE_NOT_FOUND 0
 #define MEM_ALLOCATION 1
 #define FILE_CLOSE_IN 2
-#define INVALID_INPUT 3
-#define FORK_FAIL 3
+#define PIPE_ERROR 3
+#define FORK_FAIL 4
 #define CHILD_EXECUTABLE_PATH "./child.exe"
 
 int readFile(char* fileName, char* query);
@@ -46,6 +48,9 @@ int main() {
     pid_t pid;
     pid_t childrenIds[MAX_CHILDREN] = {0};
 
+    char query[SIZE];
+    char results[MAX_CHILDREN];
+
     parentId = getpid();
 
     //signal(SIGINT, sigHandler);
@@ -63,8 +68,21 @@ int main() {
         ++numFiles;
         tok = strtok(NULL, " ");      
     }
- 
+
+    int parentWriteFds[numFiles][2];
+    int parentReadFds[numFiles][2];
+
+    //create pipes
+    for (int i = 0; i < numFiles; ++i) {
+        if(pipe(parentWriteFds[i]) < 0)
+            handleError(PIPE_ERROR);
+        if(pipe(parentReadFds[i]) < 0)
+            handleError(PIPE_ERROR);
+    }
+  
+    //fork and exec children
      for(int i = 0; i < numFiles; ++i) {
+        
         printf("Parent: Spawning a process to scan the file: %s\n", fileTokens[i]);
         
         pid = fork();
@@ -74,15 +92,45 @@ int main() {
             exit(1);
         }
         else if(pid == 0) {
+            dup2(parentWriteFds[i][READ], STDIN_FILENO);
+            dup2(parentReadFds[i][WRITE], STDOUT_FILENO);
+            //child closes the write end of the parent's write pipe.
+            close(parentWriteFds[i][WRITE]);
+            close(parentWriteFds[i][READ]);
+            //child closes the read end of the parent's read pipe.
+            close(parentReadFds[i][READ]);
+            close(parentReadFds[i][WRITE]);
 
+            //child read pipe = parent write pipe
+            //char childReadPipe[SIZE];
+           // sprintf(childReadPipe, "%d", parentWriteFds[i][READ]);
+            
+            //char childWritePipe[SIZE];
+            //sprintf(childWritePipe, "%d", parentReadFds[i][WRITE]);
+            
+           // char childNo[SIZE];
+            //sprintf(childNo, "%d", i);
+            
             char* args[] = {CHILD_EXECUTABLE_PATH, fileTokens[i], NULL};
-            execvp(args[0], args);
+            execv(args[0], args);
         }    
     }
 
+    //Parent closes write end of read pipes and vice-versa.  
     for(int i = 0; i < numFiles; ++i) {
-        wait(NULL);
+        close(parentReadFds[0][WRITE]);
+        close(parentWriteFds[0][READ]);
     }
+
+    char buffer[SIZE];
+    write(parentWriteFds[0][WRITE], "HELLO WORLD", SIZE);
+    read(parentReadFds[0][READ], buffer, SIZE);
+    printf("%s", buffer);
+   // close(parentReadFds[0][READ]);
+   // close(parentWriteFds[0][WRITE]);
+
+
+    
    
 
 
@@ -185,7 +233,7 @@ void handleError(int errorCode) {
             fprintf( stderr, "Error closing the IN file.\n" );
         break;
         case 3 :
-            fprintf( stderr, "You must enter a file name.\n" );
+            fprintf( stderr, "Pipe error.\n" );
             break;
         case 4 :
             fprintf( stderr, "Failed to fork.\n" );
