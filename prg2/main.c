@@ -49,8 +49,7 @@ int main() {
     pid_t childrenIds[MAX_CHILDREN] = {0};
 
     char query[SIZE];
-    char results[MAX_CHILDREN];
-
+    
     parentId = getpid();
 
     //signal(SIGINT, sigHandler);
@@ -68,6 +67,7 @@ int main() {
         ++numFiles;
         tok = strtok(NULL, " ");      
     }
+    
 
     int parentWriteFds[numFiles][2];
     int parentReadFds[numFiles][2];
@@ -83,7 +83,9 @@ int main() {
     //fork and exec children
      for(int i = 0; i < numFiles; ++i) {
         
+        fflush(stdout);
         printf("Parent: Spawning a process to scan the file: %s\n", fileTokens[i]);
+        fflush(stdout);
         
         pid = fork();
     
@@ -92,48 +94,66 @@ int main() {
             exit(1);
         }
         else if(pid == 0) {
-            dup2(parentWriteFds[i][READ], STDIN_FILENO);
+            //dup2(parentWriteFds[i][READ], STDIN_FILENO);
             //dup2(parentReadFds[i][WRITE], STDOUT_FILENO);
             //child closes the write end of the parent's write pipe.
             close(parentWriteFds[i][WRITE]);
-            close(parentWriteFds[i][READ]);
+            //close(parentWriteFds[i][READ]);
             //child closes the read end of the parent's read pipe.
             close(parentReadFds[i][READ]);
             //close(parentReadFds[i][WRITE]);
 
             //child read pipe = parent write pipe
-            //char childReadPipe[SIZE];
-           // sprintf(childReadPipe, "%d", parentWriteFds[i][READ]);
+            char childReadPipe[SIZE];
+            sprintf(childReadPipe, "%d", parentWriteFds[i][READ]);
             
             char childWritePipe[SIZE];
             sprintf(childWritePipe, "%d", parentReadFds[i][WRITE]);
             
-           // char childNo[SIZE];
-            //sprintf(childNo, "%d", i);
+            char childNo[SIZE];
+            sprintf(childNo, "%d", i);
             
-            char* args[] = {CHILD_EXECUTABLE_PATH, fileTokens[i], childWritePipe, NULL};
+            char* args[] = {CHILD_EXECUTABLE_PATH, fileTokens[i], childReadPipe, childWritePipe, childNo, NULL};
             execv(args[0], args);
         }    
     }
 
     //Parent closes write end of read pipes and vice-versa.  
     for(int i = 0; i < numFiles; ++i) {
-        close(parentReadFds[0][WRITE]);
-        close(parentWriteFds[0][READ]);
+        close(parentReadFds[i][WRITE]);
+        close(parentWriteFds[i][READ]);
     }
+    
+    sleep(1);
+    printf("Enter your search word: ");
+    fgets(query, SIZE, stdin);
 
     char buffer[SIZE];
-    write(parentWriteFds[0][WRITE], "HELLO WORLD", SIZE);
-    read(parentReadFds[0][READ], buffer, SIZE);
-    printf("%s", buffer);
+    
+    //write query to children
+    for(int i = 0; i < numFiles; ++i) {
+        fflush(stdout);
+        printf("Parent: Sending query to child %d\n", i);
+        fflush(stdout);
+        write(parentWriteFds[i][WRITE], query, SIZE);
+    }
+    
+    sleep(1);
+    int results[numFiles];
+    for(int i = 0; i < numFiles; ++i) { 
+        read(parentReadFds[0][READ], buffer, SIZE);
+        results[i] = (int) strtol(buffer, (char **)NULL, 10);
+        fflush(stdout);
+        printf("From Child: %d\n", results[i]);
+        fflush(stdout);
+        close(parentReadFds[0][READ]);      
+    }
+  
+    
+    //read(parentReadFds[0][READ], buffer, SIZE);
+   // printf("%s", buffer);
    // close(parentReadFds[0][READ]);
    // close(parentWriteFds[0][WRITE]);
-
-
-    
-   
-
-
 
 
     return 0;

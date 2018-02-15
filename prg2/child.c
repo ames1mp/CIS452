@@ -26,20 +26,45 @@ int main(int argc, char* argv[]) {
 
     char query[SIZE];
     int total;
+    char stringTotal[SIZE];
+    int readPipe;
     int writePipe;
+    int childNo;
 
-    writePipe = (int) strtol(argv[2], (char **)NULL, 10);
+    readPipe = (int) strtol(argv[2], (char **)NULL, 10);
+    writePipe = (int) strtol(argv[3], (char **)NULL, 10);
+    childNo = (int) strtol(argv[4], (char **)NULL, 10);
+    pid_t pid;
+    pid = getpid();
     
     while(1) {
 
-       fgets(query, 4096, stdin);
+       read(readPipe, query, SIZE);
+       
+       fflush(stdout); 
+       printf("Child %d: Scanning file - %s\n", childNo, argv[2]);
+       fflush(stdout);
 
+       printf("The quer is %s", query);
+       
        //total = readFile(argv[1], query);
-       printf("Child: The message is %s\n", query);
-       write(writePipe, query, SIZE);
 
-       //printf("%d", total);
+       total = 12;
+       
+       sprintf(stringTotal, "%d", total);
 
+
+       //fflush(stdout);
+       //printf("Child %d: Scanning file - %s\n", childNo, argv[2]); //TEST
+       //fflush(stdout);
+       
+       fflush(stdout);
+       printf("Child %d: Writing total to pipe.\n", childNo);
+       fflush(stdout);
+       
+       write(writePipe, stringTotal, SIZE);
+       //write("%s", childNo, SIZE);
+       //write(writePipe, "JHHG", SIZE);//TEST
     }
         
     //printf("I am the child, and my file is: %s\n", argv[1]);
