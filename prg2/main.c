@@ -42,22 +42,24 @@ int parentReadFds[MAX_CHILDREN][2];
 pid_t childrenIds[MAX_CHILDREN] = {0};
 int numFiles = 0;
 
-
+/***********************************************************************
+ 	Main driver. Gets the files to scan from the user, then tokenizes
+    and stores them. Spawns a single child process for each file.
+    Creates pipes and assigns two to each child. Prompts the user for
+    a search query, and passes the query to the child processes.
+    Reads results from the child processes, sums, stores, and displays
+    them.
+***********************************************************************/
 int main() {
 
     char fileNames[SIZE] = "\0";
     char* tok;
     char fileTokens[MAX_CHILDREN][SIZE];
     
-
-    //pid_t parentId;
-      pid_t pid;
+    pid_t pid;
       
-
     char query[SIZE];
     
-    //parentId = getpid();
-
     signal(SIGINT, sigHandler);
 
     printf("Please enter up to 10 files names, separated by commas\n");
@@ -74,7 +76,6 @@ int main() {
         tok = strtok(NULL, ",");      
     }
      
-
     //create pipes
     for (int i = 0; i < numFiles; ++i) {
         if(pipe(parentWriteFds[i]) < 0)
@@ -83,7 +84,6 @@ int main() {
             handleError(PIPE_ERROR);
     }
   
-    
     //fork and exec children
      for(int i = 0; i < numFiles; ++i) {
         
@@ -99,15 +99,13 @@ int main() {
             exit(1);
         }
         else if(pid == 0) {
-            //dup2(parentWriteFds[i][READ], STDIN_FILENO);
-            //dup2(parentReadFds[i][WRITE], STDOUT_FILENO);
+           
             //child closes the write end of the parent's write pipe.
             close(parentWriteFds[i][WRITE]);
-            //close(parentWriteFds[i][READ]);
+
             //child closes the read end of the parent's read pipe.
             close(parentReadFds[i][READ]);
-            //close(parentReadFds[i][WRITE]);
-
+    
             //child read pipe = parent write pipe
             char childReadPipe[SIZE];
             sprintf(childReadPipe, "%d", parentWriteFds[i][READ]);
@@ -132,6 +130,7 @@ int main() {
     sleep(1);
     
     while(1) {
+        //get user query
         printf("\nEnter your search word: ");
         fgets(query, SIZE, stdin);
 
@@ -148,6 +147,8 @@ int main() {
         
         sleep(1);
         int results[numFiles];
+        
+        //read results from children
         for(int i = 0; i < numFiles; ++i) { 
             read(parentReadFds[i][READ], buffer, SIZE);
             results[i] = (int) strtol(buffer, (char **)NULL, 10);
@@ -159,7 +160,6 @@ int main() {
 
         int total = 0;
         for(int i = 0; i < numFiles; ++i) { 
-            //printf("%d\n", results[i]);
             total += results[i];
         }
         printf("\nThe total occurrences of the word \"%s\" in %d files is: %d\n", query, numFiles, total);
@@ -168,7 +168,12 @@ int main() {
     return 0;
 }
 
-
+/***********************************************************************
+ 	Signal handler for ending the process. Closes all pipes,
+    sends signals to the child processes to close, waits on the children
+    to close and then exits. 
+    @param signum the signal code.
+***********************************************************************/
 void sigHandler(int sigNum) {
 
     if(sigNum == SIGINT) {
@@ -196,8 +201,6 @@ void sigHandler(int sigNum) {
     }
 }
 
-
-
 /***********************************************************************
     Prints an error message to stderr and exits the program with '1'
     @param error_code a macro defined integer which indicates what type
@@ -222,9 +225,7 @@ void handleError(int errorCode) {
         case 4 :
             fprintf( stderr, "Failed to fork.\n" );
             break;
-
     }
 
     exit(1);
 }
-

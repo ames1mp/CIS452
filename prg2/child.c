@@ -1,3 +1,16 @@
+/*******************************************************************************************
+* Michael Ames
+* Program 2
+* CIS 452: Operating System Concepts
+* Winter 2018 - GVSU
+* Instructor: Greg Wolffe
+*
+* This program is spawned by a parent process. It is assigned a text file to scan. It
+* counts the number of times a search query occurs in that file, and writes the value
+* to a pipe connected to it's parent.  
+*
+* The code for opening and reading files is adapted from a project I wrote for CIS 343.
+*****************************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ipc.h>
@@ -28,6 +41,11 @@ char *trimwhitespace(char *str);
 int readPipe;
 int writePipe;
 
+/***********************************************************************
+ 	Main driver for the child class. Prints logs to screen, calls the
+    readFile function on it's file, and writes the results to the pipe
+    to communicate the total matches to the parent.
+***********************************************************************/
 int main(int argc, char* argv[]) {
 
     signal(SIGUSR1, sigHandler);
@@ -42,7 +60,6 @@ int main(int argc, char* argv[]) {
     readPipe = (int) strtol(argv[2], (char **)NULL, 10);
     writePipe = (int) strtol(argv[3], (char **)NULL, 10);
     childNo = (int) strtol(argv[4], (char **)NULL, 10);
-    
     
     while(1) {
 
@@ -75,14 +92,13 @@ int main(int argc, char* argv[]) {
 /***********************************************************************
  	Dynamically allocates memory equal to the size of the input file.
  	Opens the input file and reads the text into the allocated memory.
+    Scans the file and counts the number of times the query occurs.
     @param filename the file from which to read.
     @param query the word to search for.
     @return count the number of times the word occurs in the file.
 ***********************************************************************/
 int readFile(char* fileName, char* query) {
 
-    
-    
     int fileSize;
     char line[SIZE];
     int count = 0;
@@ -135,6 +151,11 @@ int getFileSize(char* fileName) {
     return size;
 }
 
+/***********************************************************************
+ 	Signal handler for ending the process. Closes all pipes,
+    and exits the process.
+    @param signum the signal code.
+***********************************************************************/
 void sigHandler(int sigNum) {
 
     if(sigNum == SIGUSR1)  {
@@ -151,6 +172,11 @@ void sigHandler(int sigNum) {
 }
 
 //credit: https://stackoverflow.com/questions/122616/how-do-i-trim-leading-trailing-whitespace-in-a-standard-way
+/***********************************************************************
+ 	Trims the leading and trailing whitespace from a string. 
+    @param *str a pointer to the string to trim.
+    @return str a pointer to the modified string.
+***********************************************************************/
 char *trimwhitespace(char *str)
 {
   char *end;
@@ -198,4 +224,3 @@ void handleError(int errorCode) {
     }
     exit(1);
 }
-
